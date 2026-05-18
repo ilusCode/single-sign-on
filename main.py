@@ -1,5 +1,5 @@
-from fastapi import FastAPI
-from service.singleSignOnService import get_single_sign_on_info
+from fastapi import FastAPI, Header
+from service.singleSignOnService import post_single_sign_on_info
 
 app = FastAPI()
 
@@ -8,5 +8,5 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/sso-info")
-def get_sso_info():
-    return get_single_sign_on_info()
+async def get_sso_info(x_user_iluscode: str = Header(...), x_pw_iluscode: str = Header(...)):
+    return await post_single_sign_on_info(x_user_iluscode, x_pw_iluscode)
