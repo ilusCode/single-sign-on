@@ -1,4 +1,4 @@
-from Constants import ACTIVE_FIELD, NAME_FIELD, TTL_TOKEN
+from utils.Constants import ACTIVE_FIELD, NAME_FIELD, TTL_TOKEN
 from service.decryptAlgorithmService import FlowMode, decrypt_data, encrypt_data
 from service.getScope import get_scope
 
