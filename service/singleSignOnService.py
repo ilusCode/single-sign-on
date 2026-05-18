@@ -1,4 +1,4 @@
-from Constants import ACTIVE_FIELD, NAME_FIELD
+from Constants import ACTIVE_FIELD, NAME_FIELD, TTL_TOKEN
 from service.decryptAlgorithmService import FlowMode, decrypt_data, encrypt_data
 from service.getScope import get_scope
 
@@ -14,7 +14,7 @@ async def post_single_sign_on_info(user_id: str, password: str):
         "token":{
             "access_token": "",
             "refresh_token": "",
-            "ttl": 3600       
+            "ttl": TTL_TOKEN       
         }
     }
     
