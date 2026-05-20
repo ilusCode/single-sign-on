@@ -1,3 +1,4 @@
 NAME_FIELD = "name"
 ACTIVE_FIELD = "active"
 TTL_TOKEN = 3600
+ALGORITHM = "HS256"

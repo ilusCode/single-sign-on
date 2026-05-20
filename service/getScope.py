@@ -1,5 +1,5 @@
-from utils.database import coleccion
+from utils.database import collectionScope
 
 async def get_scope():
-    return await coleccion.find().to_list()
+    return await collectionScope.find().to_list()
     

@@ -6,6 +6,8 @@ class FlowMode(Enum):
 
     PSWD_AES_256_CBC: Password-based AES 256 CBC encryption.
     USR_AES_256_CBC: User-based AES 256 CBC encryption.
+    GNL_AES_256_CBC: General AES 256 CBC encryption.
     """
     PSWD_AES_256_CBC = "PSWD_AES_256_CBC"
     USR_AES_256_CBC = "USR_AES_256_CBC"
+    GNL_AES_256_CBC = "GNL_AES_256_CBC"
