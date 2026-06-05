@@ -4,7 +4,9 @@ import jwt
 from model.FlowMode import FlowMode
 from service.decryptAlgorithmService import encrypt_data
 from utils.Constants import ALGORITHM, TTL_TOKEN
+from dotenv import load_dotenv
 
+load_dotenv()
 
 async def generate_access_token(user_id_dec: str, scopes: list) -> str:
     now = datetime.now()
