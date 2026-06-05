@@ -1,7 +1,6 @@
 from utils.database import collectionUsrs
 from model.IcException import IcExcepcion
 from model.CreateUserRequest import CreateUserRequest
-import json
 
 async def put_create_account(requestBody: CreateUserRequest):
     validFindUser = await collectionUsrs.find_one({"email": (requestBody.email)})

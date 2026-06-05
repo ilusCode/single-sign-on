@@ -1,6 +1,4 @@
-from pydantic import AfterValidator, BaseModel
-from bson import ObjectId as _ObjectId
-from typing_extensions import Annotated
+from pydantic import BaseModel
 
 class User(BaseModel):
     hashId: str

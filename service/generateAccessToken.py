@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 import jwt
 from model.FlowMode import FlowMode
-from service.decryptAlgorithmService import encrypt_data
+from service.DecryptAlgorithmService import encrypt_data
 from utils.Constants import ALGORITHM, TTL_TOKEN
 from dotenv import load_dotenv
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Header, Request
-from service.decryptAlgorithmService import IcExcepcion
-from service.logonService import put_logon
-from service.registerService import put_create_account
+from service.DecryptAlgorithmService import IcExcepcion
+from service.LogonService import put_logon
+from service.RegisterService import put_create_account
 from fastapi.responses import JSONResponse
 from model.CreateUserRequest import CreateUserRequest
 
