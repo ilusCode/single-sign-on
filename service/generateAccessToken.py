@@ -2,19 +2,20 @@ import os
 from datetime import datetime, timedelta
 import jwt
 from model.FlowMode import FlowMode
-from service.DecryptAlgorithmService import encrypt_data
+from service.CryptographyalgorithmService import encrypt_data
 from utils.Constants import ALGORITHM, TTL_TOKEN
 from dotenv import load_dotenv
 
 load_dotenv()
 
-async def generate_access_token(user_id_dec: str, scopes: list) -> str:
+async def generate_access_token(user_id_dec: str, scopes: list, refresh_available: bool) -> str:
     now = datetime.now()
     payload = {
         "sub": await encrypt_data(user_id_dec, FlowMode.USR_AES_256_CBC),
         "scopes": await encrypt_data("|".join(scopes), FlowMode.GNL_AES_256_CBC),
         "iat": now,
         "exp": now + timedelta(seconds=TTL_TOKEN),
+        "ref": await encrypt_data(str(refresh_available), FlowMode.GNL_AES_256_CBC)
     }
     SECRET_KEY = os.getenv("jwt_secret_key")
 

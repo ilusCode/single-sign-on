@@ -1,7 +1,7 @@
 from model.IcException import IcExcepcion
 from service.GetUser import valid_hash_id
 from utils.Constants import ACTIVE_FIELD, NAME_FIELD, TTL_TOKEN
-from service.DecryptAlgorithmService import FlowMode, decrypt_data
+from service.CryptographyalgorithmService import FlowMode, decrypt_data
 from service.GetScope import get_scope
 from service.GenerateAccessToken import generate_access_token
 
@@ -14,8 +14,8 @@ async def put_logon(user_id: str, password: str):
         scope_parse = [scope[NAME_FIELD] for scope in l_scopes if scope[ACTIVE_FIELD]]
         return {
             "scope": scope_parse,
-            "access_token": await generate_access_token(user_id_dec, scope_parse),
-            "refresh_token": "",
+            "access_token": await generate_access_token(user_id_dec, scope_parse, False),
+            "refresh_token": await generate_access_token(user_id_dec, scope_parse, True),
             "ttl": TTL_TOKEN
         }
     else:
