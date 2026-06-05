@@ -1,9 +1,14 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+import os
 
-MONGO_URI = "mongodb://localhost:27017"
-DATABASE_NAME = "iluscodeDB"
-COLLECTION_NAME = "scope_system"
-CLTN_USR_NAME = "users_hash"
+from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MONGO_URI = f"mongodb://{os.getenv('mongo.username')}:{os.getenv('mongo.password')}@{os.getenv('mongo.host')}:{os.getenv('mongo.port')}"
+DATABASE_NAME = DATABASE_NAME = os.getenv("mongo.db")
+COLLECTION_NAME = os.getenv("mongo.collections.scope_system")
+CLTN_USR_NAME = os.getenv("mongo.collections.users_hash")
 
 client = AsyncIOMotorClient(MONGO_URI)
 database = client.get_database(DATABASE_NAME)
