@@ -1,8 +1,7 @@
 from model.IcException import IcExcepcion
-from service.GetUser import valid_hash_id
+from service.RepositoryService import valid_hash_id, get_scope
 from utils.Constants import ACTIVE_FIELD, NAME_FIELD, TTL_TOKEN
 from service.CryptographyalgorithmService import FlowMode, decrypt_data
-from service.GetScope import get_scope
 from service.GenerateAccessToken import generate_access_token
 
 async def put_logon(user_id: str, password: str):
