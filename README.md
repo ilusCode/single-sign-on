@@ -39,6 +39,11 @@ aleatorio de 16 bytes. La clave AES es el `SHA-256` de una frase secreta, y cada
 | `PSWD_AES_256_CBC` | `psw_secret_key` | Contraseña (header `x-pw-iluscode`) |
 | `GNL_AES_256_CBC` | `gnr_secret_key` | Claims `scopes` y `ref` del token |
 
+### Contraseñas
+
+`/api/register` guarda la contraseña como hash **Argon2id** (`argon2-cffi`), nunca en texto plano. En el
+login, el servicio busca el usuario activo por `nickname` y verifica la contraseña descifrada contra ese hash.
+
 ### Token JWT
 
 Firmado con **HS256** (`jwt_secret_key`). El payload contiene:
@@ -160,7 +165,7 @@ jwt_secret_key=
 
 | Colección | Documento |
 |-----------|-----------|
-| `users_hash` | `{ email, password, nickname, name, lastname, country, active }` |
+| `users_hash` | `{ email, password, nickname, name, lastname, country, active }` (`password` es un hash **Argon2id**) |
 | `scope_system` | `{ name, active }` (se incluyen en el token todos los scopes con `active: true`) |
 
 ## 🚀 Ejecución local
@@ -168,7 +173,7 @@ jwt_secret_key=
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install "fastapi[standard]" motor pycryptodome PyJWT python-dotenv
+pip install -r requirements.txt
 fastapi dev main.py
 ```
 
@@ -184,6 +189,7 @@ La API queda en `http://127.0.0.1:8000` y su documentación en `http://127.0.0.1
 │   ├── GenerateAccessToken.py           # Emisión de JWT
 │   ├── LogonService.py                  # Flujo de login
 │   ├── RegisterService.py               # Alta de usuarios
+│   ├── PasswordHashService.py           # Hash y verificación de contraseñas (Argon2id)
 │   ├── RepositoryService.py             # Consultas a MongoDB
 │   └── ValidateTokenService.py          # Validación de JWT
 └── utils/
@@ -193,9 +199,7 @@ La API queda en `http://127.0.0.1:8000` y su documentación en `http://127.0.0.1
 
 ## 🚧 Estado y pendientes
 
-- [ ] **Contraseñas sin hash:** `/api/register` guarda la contraseña tal cual, y el login la compara en texto plano. Conviene guardarla con `bcrypt` o `argon2`.
-- [ ] **Datos sensibles en los logs:** varios `print` muestran el token completo, el texto antes de cifrarlo (incluida la contraseña) y los datos descifrados.
-- [ ] **Sin `requirements.txt`** ni pruebas automatizadas.
+- [ ] **Sin pruebas automatizadas.**
 - [ ] **Refresh token:** se emite, pero todavía no hay endpoint para renovar el access token, y los dos tienen la misma vigencia.
 - [ ] `.gitlab-ci.yml` viene de GitLab y no se ejecuta en GitHub. Hay que migrarlo a GitHub Actions o eliminarlo.
 

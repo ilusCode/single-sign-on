@@ -19,7 +19,7 @@ def _derive_key(passphrase: str) -> bytes:
     return hashlib.sha256(passphrase.encode()).digest()
 
 async def encrypt_data(data: str, flow: FlowMode) -> str:
-    print(f"Encrypt `{data}` using AES-256-CBC. Returns base64(iv + ciphertext).")
+    """Encrypt `data` using AES-256-CBC. Returns base64(iv + ciphertext)."""
     try:
         key = select_key_by_flow_mode(flow)
         iv = get_random_bytes(16)
@@ -42,7 +42,7 @@ def select_key_by_flow_mode(flow: FlowMode) -> bytes:
     return key
     
 async def decrypt_data(encrypted_data: str, flow: FlowMode) -> str:
-    print(f"Decrypt base64(iv + ciphertext) encrypted with AES-256-CBC.")
+    """Decrypt base64(iv + ciphertext) encrypted with AES-256-CBC."""
     try:
         key = select_key_by_flow_mode(flow)
         raw = base64.b64decode(encrypted_data)
