@@ -181,9 +181,9 @@ La API queda en `http://127.0.0.1:8000` y su documentación en `http://127.0.0.1
 ├── model/                               # CreateUserRequest, FlowMode, IcException, Scope, User
 ├── service/
 │   ├── CryptographyalgorithmService.py  # Cifrado/descifrado AES-256-CBC
-│   ├── generateAccessToken.py           # Emisión de JWT
-│   ├── logonService.py                  # Flujo de login
-│   ├── registerService.py               # Alta de usuarios
+│   ├── GenerateAccessToken.py           # Emisión de JWT
+│   ├── LogonService.py                  # Flujo de login
+│   ├── RegisterService.py               # Alta de usuarios
 │   ├── RepositoryService.py             # Consultas a MongoDB
 │   └── ValidateTokenService.py          # Validación de JWT
 └── utils/
@@ -193,7 +193,6 @@ La API queda en `http://127.0.0.1:8000` y su documentación en `http://127.0.0.1
 
 ## 🚧 Estado y pendientes
 
-- [ ] **Importes con mayúsculas que no coinciden con los archivos:** `main.py` importa `service.LogonService` y `service.RegisterService`, y `logonService.py` importa `service.GenerateAccessToken`, pero los archivos empiezan en minúscula. Funciona en macOS y Windows, pero **falla en Linux y en Docker**.
 - [ ] **Contraseñas sin hash:** `/api/register` guarda la contraseña tal cual, y el login la compara en texto plano. Conviene guardarla con `bcrypt` o `argon2`.
 - [ ] **Datos sensibles en los logs:** varios `print` muestran el token completo, el texto antes de cifrarlo (incluida la contraseña) y los datos descifrados.
 - [ ] **Sin `requirements.txt`** ni pruebas automatizadas.
