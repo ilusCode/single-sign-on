@@ -1,0 +1,4 @@
+NAME_FIELD = "name"
+ACTIVE_FIELD = "active"
+TTL_TOKEN = 60000
+ALGORITHM = "HS256"

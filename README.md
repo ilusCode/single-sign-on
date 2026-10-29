@@ -1,93 +1,205 @@
-# Single Sing On
+# 🔐 Single Sign-On
 
+Servicio de autenticación (**Single Sign-On**) construido con **FastAPI** y **MongoDB**. Permite
+registrar usuarios, iniciar sesión con credenciales cifradas con **AES-256-CBC** y emitir y validar
+tokens **JWT** que incluyen los *scopes* activos del sistema.
 
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?logo=jsonwebtokens&logoColor=white)
 
-## Getting started
+> 🚧 **Proyecto en desarrollo.** Revisa [Estado y pendientes](#-estado-y-pendientes) antes de usarlo en producción.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+---
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## 🏗️ Cómo funciona
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/mx-iluscode-api/single-sing-on.git
-git branch -M main
-git push -uf origin main
+Cliente                                   SSO (FastAPI)                         MongoDB
+  │ PUT /api/logon                          │                                     │
+  │ x-user-iluscode: AES(usuario)  ───────▶ │ descifra usuario y contraseña       │
+  │ x-pw-iluscode:   AES(contraseña)        │ ───── busca usuario activo ───────▶ │ users_hash
+  │                                         │ ───── lee scopes activos ─────────▶ │ scope_system
+  │ ◀──── access_token + refresh_token ──── │ firma JWT (HS256)                   │
+  │                                         │                                     │
+  │ GET /api/validate                       │                                     │
+  │ Authorization: Bearer <token>  ───────▶ │ verifica firma y expiración         │
+  │ ◀──── { is_valid, payload } ─────────── │                                     │
 ```
 
-## Integrate with your tools
+### Cifrado
 
-* [Set up project integrations](https://gitlab.com/mx-iluscode-api/single-sing-on/-/settings/integrations)
+Las credenciales viajan cifradas con **AES-256-CBC**, en formato `base64(iv + ciphertext)` con un IV
+aleatorio de 16 bytes. La clave AES es el `SHA-256` de una frase secreta, y cada tipo de dato usa la suya:
 
-## Collaborate with your team
+| Flujo (`FlowMode`) | Variable de entorno | Se usa para |
+|--------------------|---------------------|-------------|
+| `USR_AES_256_CBC` | `usr_secret_key` | Usuario (header `x-user-iluscode` y claim `sub`) |
+| `PSWD_AES_256_CBC` | `psw_secret_key` | Contraseña (header `x-pw-iluscode`) |
+| `GNL_AES_256_CBC` | `gnr_secret_key` | Claims `scopes` y `ref` del token |
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### Token JWT
 
-## Test and Deploy
+Firmado con **HS256** (`jwt_secret_key`). El payload contiene:
 
-Use the built-in continuous integration in GitLab.
+| Claim | Contenido |
+|-------|-----------|
+| `sub` | Usuario, cifrado con `USR_AES_256_CBC` |
+| `scopes` | Scopes activos separados por `\|`, cifrados con `GNL_AES_256_CBC` |
+| `ref` | `"True"` si es *refresh token*, `"False"` si es *access token* (cifrado) |
+| `iat` / `exp` | Emisión y expiración (timestamp). Vigencia: `TTL_TOKEN` = 60 000 ms (60 s) |
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## 📡 API
 
-***
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `PUT` | `/api/register` | Crea una cuenta de usuario |
+| `PUT` | `/api/logon` | Inicia sesión y devuelve los tokens |
+| `GET` | `/api/validate` | Valida un token JWT |
+| `GET` | `/default` | Comprobación de vida (`{"Hello": "World"}`) |
 
-# Editing this README
+FastAPI genera la documentación interactiva en `/docs` (Swagger UI) y `/redoc`.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### `PUT /api/register`
 
-## Suggestions for a good README
+```json
+{
+  "email": "eduardo@example.com",
+  "password": "...",
+  "nickname": "eduardo",
+  "name": "Eduardo",
+  "lastname": "Fernández",
+  "country": "MX",
+  "active": true
+}
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+| Respuesta | Cuándo |
+|-----------|--------|
+| `200` `{"message": "Account created successfully"}` | Cuenta creada |
+| `401` `{"message": "User already exists"}` | Ya existe un usuario con ese `email` |
 
-## Name
-Choose a self-explaining name for your project.
+### `PUT /api/logon`
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+| Header | Valor |
+|--------|-------|
+| `x-user-iluscode` | `nickname` cifrado con `USR_AES_256_CBC` |
+| `x-pw-iluscode` | Contraseña cifrada con `PSWD_AES_256_CBC` |
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**`200 OK`**
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```json
+{
+  "scope": ["read", "write"],
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+  "ttl": 60000
+}
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+| Error | Cuándo |
+|-------|--------|
+| `400` | Un header no se puede descifrar |
+| `401` `{"message": "No Login"}` | Credenciales incorrectas, usuario inactivo o sin scopes activos |
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### `GET /api/validate`
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+| Header | Valor |
+|--------|-------|
+| `Authorization` | `Bearer <token>` |
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```json
+{ "is_valid": true, "payload": { "sub": "...", "scopes": "...", "iat": 1780000000.0, "exp": 1780000060.0, "ref": "..." } }
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```json
+{ "is_valid": false, "message": "Token has expired" }
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Cifrar credenciales para probar
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```python
+import base64, hashlib
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+def encrypt(data: str, passphrase: str) -> str:
+    key = hashlib.sha256(passphrase.encode()).digest()
+    iv = get_random_bytes(16)
+    ct = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(data.encode(), AES.block_size))
+    return base64.b64encode(iv + ct).decode()
 
-## License
-For open source projects, say how it is licensed.
+print(encrypt("eduardo", "<usr_secret_key>"))   # -> x-user-iluscode
+print(encrypt("mi-pass", "<psw_secret_key>"))   # -> x-pw-iluscode
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## ⚙️ Configuración
+
+El servicio lee la configuración de variables de entorno o de un archivo `.env` (ignorado por git):
+
+```dotenv
+# MongoDB
+mongo.username=
+mongo.password=
+mongo.host=localhost
+mongo.port=27017
+mongo.db=iluscodeDB
+mongo.collections.scope_system=scope_system
+mongo.collections.users_hash=users_hash
+
+# Claves (usa valores largos y aleatorios)
+usr_secret_key=
+psw_secret_key=
+gnr_secret_key=
+jwt_secret_key=
+```
+
+### Colecciones de MongoDB
+
+| Colección | Documento |
+|-----------|-----------|
+| `users_hash` | `{ email, password, nickname, name, lastname, country, active }` |
+| `scope_system` | `{ name, active }` (se incluyen en el token todos los scopes con `active: true`) |
+
+## 🚀 Ejecución local
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install "fastapi[standard]" motor pycryptodome PyJWT python-dotenv
+fastapi dev main.py
+```
+
+La API queda en `http://127.0.0.1:8000` y su documentación en `http://127.0.0.1:8000/docs`.
+
+## 📁 Estructura
+
+```
+├── main.py                              # Rutas FastAPI y manejador de IcExcepcion
+├── model/                               # CreateUserRequest, FlowMode, IcException, Scope, User
+├── service/
+│   ├── CryptographyalgorithmService.py  # Cifrado/descifrado AES-256-CBC
+│   ├── generateAccessToken.py           # Emisión de JWT
+│   ├── logonService.py                  # Flujo de login
+│   ├── registerService.py               # Alta de usuarios
+│   ├── RepositoryService.py             # Consultas a MongoDB
+│   └── ValidateTokenService.py          # Validación de JWT
+└── utils/
+    ├── Constants.py                     # TTL_TOKEN, ALGORITHM, nombres de campos
+    └── database.py                      # Cliente Motor (MongoDB asíncrono)
+```
+
+## 🚧 Estado y pendientes
+
+- [ ] **Importes con mayúsculas que no coinciden con los archivos:** `main.py` importa `service.LogonService` y `service.RegisterService`, y `logonService.py` importa `service.GenerateAccessToken`, pero los archivos empiezan en minúscula. Funciona en macOS y Windows, pero **falla en Linux y en Docker**.
+- [ ] **Contraseñas sin hash:** `/api/register` guarda la contraseña tal cual, y el login la compara en texto plano. Conviene guardarla con `bcrypt` o `argon2`.
+- [ ] **Datos sensibles en los logs:** varios `print` muestran el token completo, el texto antes de cifrarlo (incluida la contraseña) y los datos descifrados.
+- [ ] **Sin `requirements.txt`** ni pruebas automatizadas.
+- [ ] **Refresh token:** se emite, pero todavía no hay endpoint para renovar el access token, y los dos tienen la misma vigencia.
+- [ ] `.gitlab-ci.yml` viene de GitLab y no se ejecuta en GitHub. Hay que migrarlo a GitHub Actions o eliminarlo.
+
+## 👤 Autor
+
+**Eduardo Fernández Morales** — [@ilusCode](https://github.com/ilusCode) · [LinkedIn](https://www.linkedin.com/in/eduardo-fernandez-morales/)
